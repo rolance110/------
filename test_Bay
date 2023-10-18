@@ -21,7 +21,7 @@ weight_distribution = norm(loc=weight_mean, scale=np.sqrt(weight_var))
 
 # 預測某人的身高和體重
 predicted_height = height_distribution.rvs()
-predicted_weight = weight_distribution.rvs()  # test123456
+predicted_weight = weight_distribution.rvs()  # t
 
 # 可視化散點圖
 plt.figure(figsize=(8, 6))

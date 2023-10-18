@@ -1,0 +1,40 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# 假設觀測數據
+observed_heights = np.array([160, 165, 170, 175, 180])  # 身高（單位：厘米）
+observed_weights = np.array([60, 65, 70, 75, 80])  # 體重（單位：公斤）
+
+# 估計身高和體重的平均值和方差
+height_mean = np.mean(observed_heights)
+height_var = np.var(observed_heights)
+weight_mean = np.mean(observed_weights)
+weight_var = np.var(observed_weights)
+
+# 計算身高和體重之間的協方差
+covariance = np.cov(observed_heights, observed_weights)[0, 1]
+
+# 創建高斯分佈對象
+height_distribution = norm(loc=height_mean, scale=np.sqrt(height_var))
+weight_distribution = norm(loc=weight_mean, scale=np.sqrt(weight_var))
+
+# 預測某人的身高和體重
+predicted_height = height_distribution.rvs()
+predicted_weight = weight_distribution.rvs()
+
+# 可視化散點圖
+plt.figure(figsize=(8, 6))
+plt.scatter(observed_heights, observed_weights,
+            label='觀測數據', color='b', marker='o')
+plt.scatter(predicted_height, predicted_weight,
+            label='預測值', color='r', marker='x')
+plt.xlabel('身高（mm）')
+plt.ylabel('體重（kg）')
+plt.legend()
+plt.title('身高和體重關係')
+plt.grid(True)
+plt.show()
+
+print(f"預測的身高：{predicted_height:.2f} 厘米")
+print(f"預測的體重：{predicted_weight:.2f} 公斤")

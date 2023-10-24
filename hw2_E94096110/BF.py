@@ -31,7 +31,7 @@ def total_dist(path, mat):  # 計算總路徑長度
     return current_total_dist
 
 
-def BF(mat):
+def BF(mat):  # 窮舉法
     city_num = len(mat)
     best_path = list(range(city_num))
     best_distance = total_dist(best_path, mat)

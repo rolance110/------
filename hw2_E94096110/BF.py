@@ -38,17 +38,17 @@ def BF(mat):  # 窮舉法
     # 頭尾固定->窮舉(n-1)!種排列
     exhaustive_num = math.factorial(city_num-1)
     # 初始狀態 0->1->2->3->4->0
-    path = list(range(1, city_num))
+    path = list(range(1, city_num)
 
     for i in range(exhaustive_num-1):
         current_total_dist = total_dist(path, mat)
-        # 刪掉path的頭尾0，避免被計算
+        # 刪掉path的頭尾0，避免被計算   
         path = path[1:-1]
         # 執行字典序演算法
         path = lexicographical(path)
         # 更新最佳路徑
         if (current_total_dist < best_distance):
-            best_distance = current_total_dist
+            best_distance = current_total_dist 
             best_path = path
 
     return best_path, best_distance
@@ -67,3 +67,6 @@ if __name__ == "__main__":
 
     print("best Path:", best_path)
     print("best Distance:", best_distance)
+# print result
+# best Path: [0, 1, 2, 4, 3, 0]
+print("best Path:", best_path)

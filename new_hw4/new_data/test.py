@@ -1,73 +1,98 @@
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, classification_report
 
-# 假設你的資料集為df，其中包含所有特徵和目標變數
-# X是特徵，y是目標變數
+def entropy(examples):
+    """計算熵。"""
+    counts = np.unique(examples[:, -1], return_counts=True)
+    p = counts[1] / len(examples)
+    print("p ", p)
+    return -p * np.log2(p)
 
-df = pd.read_csv('new_hw4/new_data/train.csv')
 
-X = df.drop('fake', axis=1)
-y = df['fake']
+def importance(attribute, examples):
+    """計算屬性的重要性。"""
+    print("attribute ", attribute)
+    left_examples = examples[examples[:, attribute] == 0]
+    right_examples = examples[examples[:, attribute] == 1]
+    entropy_total = entropy(examples) - \
+        (entropy(left_examples) + entropy(right_examples)) / 2
+    print("entropy_total ", entropy_total)
+    return entropy_total
 
-# 切割資料集
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# 建立Decision Tree模型
-model = DecisionTreeClassifier(random_state=42)
+def decision_tree_learning(examples, attributes, parent_examples):
+    """決策樹學習。"""
+    if len(examples) == 0:
+        return parent_examples.mode(axis=0)[0]
+    elif all(examples[:, -1] == examples[0, -1]):
+        # return examples[:, -1].item()
+        return examples[0, -1]
+    elif len(attributes) == 0:
+        # return parent_examples.mode(axis=0)[0] # 1
+        return np.argmax(np.bincount(examples[:, -1].astype(int)))
+    else:
+        print("attributes ", attributes)
+        index = np.argmax([importance(i, examples) for i in attributes])
+        print("index ", index) 
+        attribute = attributes[index-1] # 選出entropy最大的屬性  
+        print("attribute_value ", attributes[index-1]) # !
+        tree = DecisionTree(attribute)
+        for value in np.unique(examples[:, attribute]):
+            exs = examples[examples[:, attribute] == value]
+            # subtree = decision_tree_learning(exs, attributes - [attribute], examples)
+            subtree = decision_tree_learning(
+                exs, [attr for attr in attributes if attr != attribute], examples)
+            tree.add_branch(value, subtree)
+        return tree
 
-# 模型訓練
-model.fit(X_train, y_train)
 
-# 模型預測
-y_pred = model.predict(X_test)
+class DecisionTree(object):
+    """決策樹類別。"""
 
-# 模型評估
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print("Classification Report:\n", classification_report(y_test, y_pred))
+    def __init__(self, attribute):
+        self.attribute = attribute
+        self.left = None
+        self.right = None
 
-from sklearn.model_selection import GridSearchCV
+    def add_branch(self, value, subtree):
+        if value < self.attribute:
+            self.left = subtree
+            self.right = DecisionTree(value)
+        else:
+            self.left = DecisionTree(value)
+            self.right = subtree
 
-# 定義Decision Tree模型
-model = DecisionTreeClassifier(random_state=42)
+    def classify(self, example):
+        print()
+        print("predicting...")
+        print("example ", example)
+        print("attribute ", self.attribute)
+        
+        if example[self.attribute] < self.attribute:
+            if self.left is not None:
+                print("left ", self.left.classify(example))
+                return self.left.classify(example)
+            else:
+                return None
+        else:
+            print("right ", self.right.classify(example))
+            return self.right.classify(example)
 
-# 定義超參數範圍
-param_grid = {
-    'max_depth': [None, 5, 10, 15],  # 嘗試不同的深度值
-    'min_samples_split': [2, 5, 10],  # 嘗試不同的最小分割樣本數
-    'min_samples_leaf': [1, 2, 4]  # 嘗試不同的最小葉子樣本數
-}
 
-# 使用GridSearchCV進行交叉驗證
-grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy')
-grid_search.fit(X_train, y_train)
 
-# 找到最佳參數
-best_params = grid_search.best_params_
-print("Best Parameters:", best_params)
+# 生成數據集
+examples = np.array([
+    [0, 0, 0],
+    [0, 0, 1],
+    [1, 0, 0],
+    [1, 1, 1],
+    [1, 1, 1]
+])
+attributes = [1, 0]
+parent_examples = None
+# 訓練決策樹
+tree = decision_tree_learning(examples, attributes, parent_examples)
 
-# 使用最佳參數重新訓練模型
-best_model = grid_search.best_estimator_
-best_model.fit(X_train, y_train)
-
-# 使用測試集評估最佳模型性能
-y_pred_best = best_model.predict(X_test)
-
-# 模型評估
-print("Accuracy (Best Model):", accuracy_score(y_test, y_pred_best))
-print("Classification Report (Best Model):\n", classification_report(y_test, y_pred_best))
-
-from sklearn.tree import plot_tree
-plt.figure(figsize=(20, 10))
-plot_tree(best_model, filled=True, feature_names=X.columns, class_names=['Real', 'Fake'])
-plt.show()
+# 預測結果
+print(tree.classify([1, 0]))
+# 輸出：0
